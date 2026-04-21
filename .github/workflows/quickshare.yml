@@ -53,6 +53,16 @@ jobs:
           sleep 5
           PUBLIC_URL=$(grep -oE 'https://[a-zA-Z0-9-]+\.trycloudflare\.com' tunnel.log | head -1)
           echo "PUBLIC_URL=$PUBLIC_URL" >> $GITHUB_ENV
+          
+          # Write to step summary (visible in real-time!)
+          echo "# QuickShare is LIVE!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Public URL:** [$PUBLIC_URL]($PUBLIC_URL)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Duration:** ${{ github.event.inputs.duration }} minutes" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Share this URL with anyone who needs to upload files." >> $GITHUB_STEP_SUMMARY
+          
           echo ""
           echo "=========================================="
           echo "QuickShare is LIVE at: $PUBLIC_URL"
