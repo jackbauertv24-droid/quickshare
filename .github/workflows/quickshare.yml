@@ -28,6 +28,12 @@ jobs:
       - name: Create uploads directory
         run: mkdir -p uploads
 
+      - name: Calculate max file size
+        run: |
+          MB=${{ github.event.inputs.max_file_size_mb }}
+          BYTES=$((MB * 1024 * 1024))
+          echo "MAX_FILE_SIZE=$BYTES" >> $GITHUB_ENV
+
       - name: Start upload server
         run: |
           python upload_server_gh.py &
@@ -35,7 +41,6 @@ jobs:
         env:
           PORT: 8000
           UPLOAD_DIR: ./uploads
-          MAX_FILE_SIZE: ${{ github.event.inputs.max_file_size_mb * 1024 * 1024 }}
 
       - name: Download cloudflared
         run: |
