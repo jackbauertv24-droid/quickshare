@@ -1,0 +1,103 @@
+name: QuickShare
+
+on:
+  workflow_dispatch:
+    inputs:
+      duration:
+        description: 'Duration in minutes'
+        required: false
+        default: '5'
+      max_file_size_mb:
+        description: 'Max file size in MB'
+        required: false
+        default: '10'
+
+jobs:
+  quickshare:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Create uploads directory
+        run: mkdir -p uploads
+
+      - name: Start upload server
+        run: |
+          python upload_server_gh.py &
+          echo "SERVER_PID=$!" >> $GITHUB_ENV
+        env:
+          PORT: 8000
+          UPLOAD_DIR: ./uploads
+          MAX_FILE_SIZE: ${{ github.event.inputs.max_file_size_mb * 1024 * 1024 }}
+
+      - name: Download cloudflared
+        run: |
+          curl -L https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 -o cloudflared
+          chmod +x cloudflared
+
+      - name: Start cloudflare tunnel
+        run: |
+          ./cloudflared tunnel --url http://localhost:8000 2>&1 | tee tunnel.log &
+          sleep 5
+          PUBLIC_URL=$(grep -oE 'https://[a-zA-Z0-9-]+\.trycloudflare\.com' tunnel.log | head -1)
+          echo "PUBLIC_URL=$PUBLIC_URL" >> $GITHUB_ENV
+          echo ""
+          echo "=========================================="
+          echo "QuickShare is LIVE at: $PUBLIC_URL"
+          echo "=========================================="
+          echo ""
+
+          # Create URL file for artifact
+          echo "$PUBLIC_URL" > public_url.txt
+
+      - name: Wait for uploads
+        run: |
+          DURATION=${{ github.event.inputs.duration }}
+          echo "Waiting $DURATION minutes for file uploads..."
+          echo "Share the URL above with anyone who needs to upload files."
+          
+          for i in $(seq 1 $DURATION); do
+            echo "Time remaining: $((DURATION - i)) minutes"
+            if [ -d "uploads" ]; then
+              COUNT=$(ls -1 uploads 2>/dev/null | wc -l)
+              echo "Files uploaded so far: $COUNT"
+            fi
+            sleep 60
+          done
+
+      - name: Stop server and tunnel
+        run: |
+          kill $SERVER_PID 2>/dev/null || true
+          pkill -f cloudflared 2>/dev/null || true
+
+      - name: List uploaded files
+        run: |
+          echo "=== Uploaded Files ==="
+          if [ -d "uploads" ] && [ "$(ls -A uploads 2>/dev/null)" ]; then
+            ls -lah uploads/
+          else
+            echo "No files were uploaded."
+          fi
+
+      - name: Upload files as artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: quickshare-uploads-${{ github.run_number }}
+          path: uploads/
+          retention-days: 30
+
+      - name: Upload public URL
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: quickshare-url
+          path: public_url.txt
+          retention-days: 7
