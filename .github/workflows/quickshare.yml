@@ -54,32 +54,19 @@ jobs:
           PUBLIC_URL=$(grep -oE 'https://[a-zA-Z0-9-]+\.trycloudflare\.com' tunnel.log | head -1)
           echo "PUBLIC_URL=$PUBLIC_URL" >> $GITHUB_ENV
           
-          # Shorten URL using TinyURL (free, no auth, no blacklist)
-          SHORT_URL=$(curl -s "https://tinyurl.com/api-create.php?url=$(echo "$PUBLIC_URL" | jq -sRr @uri)")
-          echo "SHORT_URL=$SHORT_URL" >> $GITHUB_ENV
-          
-          # Write to step summary (visible in real-time!)
           echo "# QuickShare is LIVE!" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "| URL Type | Link |" >> $GITHUB_STEP_SUMMARY
-          echo "|----------|------|" >> $GITHUB_STEP_SUMMARY
-          echo "| Short (share this) | [$SHORT_URL]($SHORT_URL) |" >> $GITHUB_STEP_SUMMARY
-          echo "| Full URL | [$PUBLIC_URL]($PUBLIC_URL) |" >> $GITHUB_STEP_SUMMARY
+          echo "**Upload URL:** [$PUBLIC_URL]($PUBLIC_URL)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Duration:** ${{ github.event.inputs.duration }} minutes | **Max file size:** ${{ github.event.inputs.max_file_size_mb }} MB" >> $GITHUB_STEP_SUMMARY
           
           echo ""
           echo "=========================================="
-          echo "QuickShare is LIVE!"
-          echo "=========================================="
-          echo "Short URL: $SHORT_URL"
-          echo "Full URL:  $PUBLIC_URL"
+          echo "QuickShare is LIVE at: $PUBLIC_URL"
           echo "=========================================="
           echo ""
 
-          # Create URL file for artifact
-          echo "Short URL: $SHORT_URL" > public_url.txt
-          echo "Full URL: $PUBLIC_URL" >> public_url.txt
+          echo "$PUBLIC_URL" > public_url.txt
 
       - name: Wait for uploads
         run: |
