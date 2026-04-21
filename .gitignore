@@ -1,0 +1,18 @@
+# Uploads
+uploads/
+uploaded_file.bin
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Tunnel logs
+tunnel.log
+
+# URL file
+public_url.txt
+
+# Misc
+result/
+*.nes
