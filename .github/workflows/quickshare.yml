@@ -54,8 +54,8 @@ jobs:
           PUBLIC_URL=$(grep -oE 'https://[a-zA-Z0-9-]+\.trycloudflare\.com' tunnel.log | head -1)
           echo "PUBLIC_URL=$PUBLIC_URL" >> $GITHUB_ENV
           
-          # Shorten URL using is.gd (free, no auth)
-          SHORT_URL=$(curl -s "https://is.gd/create.php?format=simple&url=$(echo "$PUBLIC_URL" | jq -sRr @uri)")
+          # Shorten URL using TinyURL (free, no auth, no blacklist)
+          SHORT_URL=$(curl -s "https://tinyurl.com/api-create.php?url=$(echo "$PUBLIC_URL" | jq -sRr @uri)")
           echo "SHORT_URL=$SHORT_URL" >> $GITHUB_ENV
           
           # Write to step summary (visible in real-time!)
